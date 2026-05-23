@@ -1,7 +1,8 @@
 <?php
 
+use App\Http\Controllers\Honeypot\HoneypotController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::any('/{path?}', HoneypotController::class)
+    ->where('path', '.*')
+    ->name('honeypot.catch-all');

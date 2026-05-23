@@ -8,6 +8,10 @@ class DeploymentScope
 {
     public function allowsRequest(Request $request): bool
     {
+        if ($this->isHealthRequest($request)) {
+            return true;
+        }
+
         if (! $this->isEnforced()) {
             return true;
         }
@@ -28,10 +32,7 @@ class DeploymentScope
     {
         $hosts = config('honeypot.allowed_hosts', []);
 
-        return array_values(array_filter(array_map(
-            fn (mixed $host): string => $this->normalizeHost(is_string($host) ? $host : ''),
-            is_array($hosts) ? $hosts : []
-        )));
+        return is_array($hosts) ? $hosts : [];
     }
 
     public function allowsHost(?string $host): bool
@@ -64,6 +65,16 @@ class DeploymentScope
         }
 
         return $host === $allowedHost;
+    }
+
+    public function healthPath(): string
+    {
+        return '/'.trim((string) config('honeypot.health_path', '/up'), '/');
+    }
+
+    public function isHealthRequest(Request $request): bool
+    {
+        return $request->getPathInfo() === $this->healthPath();
     }
 
     private function normalizeHost(?string $host): string
