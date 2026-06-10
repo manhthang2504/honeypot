@@ -22,7 +22,8 @@ class DeploymentScope
     public function isEnforced(): bool
     {
         return (bool) config('honeypot.enabled', true)
-            && (bool) config('honeypot.enforce_host', true);
+            && (bool) config('honeypot.enforce_host', true)
+            && !app()->environment(['local', 'testing']);
     }
 
     /**
