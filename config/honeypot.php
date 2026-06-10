@@ -21,6 +21,9 @@ return [
     'capture' => [
         'session_window_minutes' => (int) env('HONEYPOT_SESSION_WINDOW_MINUTES', 30),
         'max_body_bytes' => (int) env('HONEYPOT_MAX_BODY_BYTES', 65535),
+        'max_preview_bytes' => (int) env('HONEYPOT_MAX_PREVIEW_BYTES', 8192),
+        'max_collection_items' => (int) env('HONEYPOT_MAX_COLLECTION_ITEMS', 50),
+        'max_depth' => (int) env('HONEYPOT_MAX_CAPTURE_DEPTH', 5),
         'upload_max_kb' => (int) env('HONEYPOT_UPLOAD_MAX_KB', 2048),
         'quarantine_disk' => env('HONEYPOT_QUARANTINE_DISK', 'honeypot-quarantine'),
     ],

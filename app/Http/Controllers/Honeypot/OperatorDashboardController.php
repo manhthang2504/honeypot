@@ -13,12 +13,10 @@ class OperatorDashboardController extends Controller
 {
     public function index(Request $request): View
     {
-        $accessToken = (string) $request->query('token', '');
         $events = HoneypotEvent::query()
             ->with(['session', 'artifacts'])
             ->latest('occurred_at')
-            ->paginate(25)
-            ->appends(['token' => $accessToken]);
+            ->paginate(25);
 
         $topPaths = HoneypotEvent::query()
             ->select('path', DB::raw('count(*) as hits'))
@@ -43,7 +41,6 @@ class OperatorDashboardController extends Controller
         ];
 
         return view('honeypot.ops.dashboard', [
-            'accessToken' => $accessToken,
             'events' => $events,
             'recentSummaries' => HoneypotDailySummary::query()->latest('summary_date')->limit(7)->get(),
             'stats' => $stats,
@@ -57,7 +54,6 @@ class OperatorDashboardController extends Controller
         $event->load(['session', 'artifacts']);
 
         return view('honeypot.ops.event', [
-            'accessToken' => (string) $request->query('token', ''),
             'event' => $event,
         ]);
     }

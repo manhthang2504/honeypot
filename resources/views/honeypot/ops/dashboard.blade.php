@@ -76,7 +76,7 @@
                     <td>{{ $event->occurred_at?->format('Y-m-d H:i:s') }}</td>
                     <td>{{ $event->method }}</td>
                     <td>
-                        <a href="{{ route('honeypot.ops.events.show', ['event' => $event, 'token' => $accessToken]) }}">
+                        <a href="{{ route('honeypot.ops.events.show', ['event' => $event]) }}">
                             <code>{{ $event->path }}</code>
                         </a>
                     </td>

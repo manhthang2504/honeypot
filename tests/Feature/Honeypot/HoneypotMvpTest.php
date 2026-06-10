@@ -56,9 +56,22 @@ class HoneypotMvpTest extends TestCase
     {
         $this->get('http://honeypot.test/ops')->assertNotFound();
 
-        $this->get('http://honeypot.test/ops?token=secret-token')
+        $bootstrap = $this->get('http://honeypot.test/ops?token=secret-token');
+
+        $bootstrap->assertRedirect('http://honeypot.test/ops');
+
+        $this->followRedirects($bootstrap)
+            ->assertOk()
+            ->assertSee('Honeypot telemetry')
+            ->assertDontSee('token=secret-token');
+
+        $this->get('http://honeypot.test/ops')
             ->assertOk()
             ->assertSee('Honeypot telemetry');
+
+        $this->get('http://honeypot.test/ops', [
+            'X-Honeypot-Token' => 'secret-token',
+        ])->assertOk();
 
         $this->assertSame(0, HoneypotEvent::query()->count());
     }
@@ -77,5 +90,38 @@ class HoneypotMvpTest extends TestCase
         $this->assertNotNull($artifact);
         $this->assertTrue($artifact->stored);
         Storage::disk('honeypot-quarantine')->assertExists($artifact->storage_path);
+    }
+
+    public function test_it_truncates_oversized_operator_controlled_request_data_before_persisting(): void
+    {
+        $path = '/admin/'.str_repeat('a', 400);
+        $body = "\xFF\xFE".str_repeat('A', 70000);
+        $userAgent = str_repeat('scanner-', 600);
+
+        $response = $this
+            ->withHeaders([
+                'User-Agent' => $userAgent,
+            ])
+            ->call(
+                'POST',
+                'http://honeypot.test'.$path,
+                ['payload' => str_repeat('value-', 3000)],
+                [],
+                [],
+                ['CONTENT_TYPE' => 'application/octet-stream'],
+                $body,
+            );
+
+        $response->assertStatus(403);
+
+        $event = HoneypotEvent::query()->latest('id')->firstOrFail();
+
+        $this->assertSame(255, strlen($event->path));
+        $this->assertSame(255, strlen($event->normalized_path));
+        $this->assertTrue($event->raw_body_truncated);
+        $this->assertStringContainsString('[binary body bytes=', $event->raw_body ?? '');
+        $this->assertLessThanOrEqual(8192, strlen((string) $event->headers['user-agent'][0]));
+        $this->assertLessThanOrEqual(8192, strlen((string) $event->input['payload']));
+        $this->assertLessThanOrEqual(8192, strlen((string) $event->user_agent));
     }
 }

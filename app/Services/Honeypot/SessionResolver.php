@@ -5,6 +5,7 @@ namespace App\Services\Honeypot;
 use App\Models\HoneypotSession;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class SessionResolver
 {
@@ -26,15 +27,15 @@ class SessionResolver
             [
                 'fingerprint' => $fingerprint,
                 'source_ip' => $sourceIp !== '' ? $sourceIp : null,
-                'forwarded_for' => $request->header('X-Forwarded-For'),
-                'user_agent' => $userAgent !== '' ? $userAgent : null,
+                'forwarded_for' => $this->limitText($request->header('X-Forwarded-For')),
+                'user_agent' => $userAgent !== '' ? $this->limitText($userAgent) : null,
                 'user_agent_hash' => $userAgent !== '' ? hash('sha256', strtolower($userAgent)) : null,
-                'first_path' => $request->getPathInfo(),
+                'first_path' => Str::limit($request->getPathInfo(), 255, ''),
                 'started_at' => $bucketStart,
                 'last_seen_at' => $now,
                 'hit_count' => 0,
                 'metadata' => [
-                    'host' => $request->getHost(),
+                    'host' => Str::limit($request->getHost(), 255, ''),
                 ],
             ],
         );
@@ -42,9 +43,18 @@ class SessionResolver
         $session->forceFill([
             'last_seen_at' => $now,
             'hit_count' => (int) $session->hit_count + 1,
-            'forwarded_for' => $request->header('X-Forwarded-For'),
+            'forwarded_for' => $this->limitText($request->header('X-Forwarded-For')),
         ])->save();
 
         return $session;
+    }
+
+    private function limitText(?string $value, int $limit = 4096): ?string
+    {
+        if (! is_string($value) || $value === '') {
+            return null;
+        }
+
+        return Str::limit($value, $limit, '');
     }
 }

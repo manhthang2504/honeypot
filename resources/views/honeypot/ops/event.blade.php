@@ -1,7 +1,7 @@
 @extends('honeypot.ops.layout', ['title' => 'Captured event'])
 
 @section('content')
-    <p><a href="{{ route('honeypot.ops.dashboard', ['token' => $accessToken]) }}">&larr; Back to dashboard</a></p>
+    <p><a href="{{ route('honeypot.ops.dashboard') }}">&larr; Back to dashboard</a></p>
 
     <div class="grid">
         <div class="card">

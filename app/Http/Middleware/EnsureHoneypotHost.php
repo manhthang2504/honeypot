@@ -11,8 +11,7 @@ class EnsureHoneypotHost
 {
     public function __construct(
         private readonly DeploymentScope $deploymentScope,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
